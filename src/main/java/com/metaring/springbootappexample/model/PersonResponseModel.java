@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package com.metaring.springbootexample.model;
+package com.metaring.springbootappexample.model;
 
 public class PersonResponseModel {
     private String firstName;
@@ -43,7 +43,6 @@ public class PersonResponseModel {
 
     @Override
     public String toString() {
-        return String.format(
-                "PersonResponseModel[firstName='%s', lastName='%s']", firstName, lastName);
+        return String.format("PersonResponseModel[firstName='%s', lastName='%s']", firstName, lastName);
     }
 }

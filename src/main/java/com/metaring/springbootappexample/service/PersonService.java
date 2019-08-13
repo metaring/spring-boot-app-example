@@ -14,9 +14,9 @@
  *    limitations under the License.
  */
 
-package com.metaring.springbootexample.service;
+package com.metaring.springbootappexample.service;
 
-import com.metaring.springbootexample.model.PersonResponseModel;
+import com.metaring.springbootappexample.model.PersonResponseModel;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;

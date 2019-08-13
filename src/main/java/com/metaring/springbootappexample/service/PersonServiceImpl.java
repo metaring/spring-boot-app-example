@@ -14,11 +14,10 @@
  *    limitations under the License.
  */
 
-package com.metaring.springbootexample.service;
+package com.metaring.springbootappexample.service;
 
-import com.metaring.springbootexample.model.PersonResponseModel;
-import com.metaring.springbootexample.repository.PersonRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.metaring.springbootappexample.model.PersonResponseModel;
+import com.metaring.springbootappexample.repository.PersonRepository;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 

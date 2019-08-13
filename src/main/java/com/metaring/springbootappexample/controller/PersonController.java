@@ -14,15 +14,22 @@
  *    limitations under the License.
  */
  
-package com.metaring.springbootexample.controller;
+package com.metaring.springbootappexample.controller;
 
-import com.metaring.springbootexample.model.PersonResponseModel;
-import com.metaring.springbootexample.service.PersonService;
+import com.metaring.springbootappexample.model.PersonMessageResponseModel;
+import com.metaring.springbootappexample.model.PersonMessageModel;
+import com.metaring.springbootappexample.model.PersonResponseModel;
+import com.metaring.springbootappexample.service.PersonService;
+import org.springframework.messaging.handler.annotation.MessageExceptionHandler;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.util.HtmlUtils;
 
 import java.util.HashMap;
 import java.util.List;
@@ -46,5 +53,21 @@ public class PersonController {
         responseModel.put("persons", personsByLastName.get());
         model.addAllAttributes(responseModel);
         return CompletableFuture.completedFuture("person");
+    }
+
+    @Async("asyncExecutor")
+    @MessageMapping("/hello")
+    @SendTo("/topic/greetings")
+    public CompletableFuture<PersonMessageResponseModel> greeting(PersonMessageModel message) throws Exception {
+        return CompletableFuture.completedFuture(
+                new PersonMessageResponseModel("Hello, " +
+                        HtmlUtils.htmlEscape(message.getFirstName() + " " + message.getLastName()) + "!"));
+    }
+
+    @Async("asyncExecutor")
+    @MessageExceptionHandler
+    @SendToUser("/queue/errors")
+    public String handleException(Throwable exception) {
+        return exception.getMessage();
     }
 }

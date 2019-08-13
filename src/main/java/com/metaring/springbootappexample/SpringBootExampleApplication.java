@@ -14,17 +14,15 @@
  *    limitations under the License.
  */
 
-package com.metaring.springbootexample;
+package com.metaring.springbootappexample;
 
-import com.metaring.springbootexample.domain.Person;
-import com.metaring.springbootexample.repository.PersonRepository;
+import com.metaring.springbootappexample.domain.Person;
+import com.metaring.springbootappexample.repository.PersonRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
-import org.springframework.scheduling.annotation.EnableAsync;
 
-@EnableAsync
 @SpringBootApplication
 public class SpringBootExampleApplication {
 
