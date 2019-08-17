@@ -56,18 +56,11 @@ public class PersonController {
     }
 
     @Async("asyncExecutor")
-    @MessageMapping("/hello")
+    @MessageMapping("${messageMapping}")
     @SendTo("/topic/greetings")
     public CompletableFuture<PersonMessageResponseModel> greeting(PersonMessageModel message) throws Exception {
         return CompletableFuture.completedFuture(
                 new PersonMessageResponseModel("Hello, " +
                         HtmlUtils.htmlEscape(message.getFirstName() + " " + message.getLastName()) + "!"));
-    }
-
-    @Async("asyncExecutor")
-    @MessageExceptionHandler
-    @SendToUser("/queue/errors")
-    public String handleException(Throwable exception) {
-        return exception.getMessage();
     }
 }

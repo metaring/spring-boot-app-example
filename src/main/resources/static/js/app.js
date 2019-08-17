@@ -30,7 +30,7 @@ function setConnected(connected) {
 }
 
 function connect() {
-    var socket = new SockJS('/person-web-socket');
+    var socket = new SockJS('/ws-notification');
     stompClient = Stomp.over(socket);
     stompClient.connect({}, function (frame) {
         setConnected(true);
@@ -55,7 +55,7 @@ function showGreeting(message) {
 
 function sendPersonData() {
 var personData = { 'firstName': $("#firstName").val(), 'lastName': $("#lastName").val() };
- stompClient.send("/app/hello", {}, JSON.stringify(personData));
+ stompClient.send("/hello", {}, JSON.stringify(personData));
 }
 
 $(function () {
