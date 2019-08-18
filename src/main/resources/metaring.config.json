@@ -1,0 +1,18 @@
+{
+  "system": {
+    "name": "MetaRing",
+    "executionEnvironment": "DEVELOPMENT"
+  },
+  "ext": {
+    "spring": {
+      "instances": 1,
+      "webServices": {
+        "accessPointName": "call",
+        "sockjs": true
+      },
+      "rest": {
+        "applicationName": "/hello"
+      }
+    }
+  }
+}

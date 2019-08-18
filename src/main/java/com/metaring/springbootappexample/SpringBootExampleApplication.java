@@ -17,10 +17,10 @@
 package com.metaring.springbootappexample;
 
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 
+import com.metaring.framework.ext.spring.boot.MetaRingSpringBootApplication;
 import com.metaring.springbootappexample.domain.Person;
 import com.metaring.springbootappexample.repository.PersonRepository;
 
@@ -28,12 +28,12 @@ import com.metaring.springbootappexample.repository.PersonRepository;
 public class SpringBootExampleApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(SpringBootExampleApplication.class, args);
+        MetaRingSpringBootApplication.run(args, SpringBootExampleApplication.class);
     }
 
     @Bean
     public CommandLineRunner demo(PersonRepository repository) {
-        return (args) -> {
+        return args -> {
             repository.save(new Person("Hayk", "Hovhannisyan"));
             repository.save(new Person("Marco", "Vasapollo"));
             repository.save(new Person("Jack", "Bauer"));

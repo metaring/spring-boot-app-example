@@ -32,3 +32,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+/**/*.core
+/**/metaring.config.local.json
