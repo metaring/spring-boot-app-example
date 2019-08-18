@@ -16,20 +16,13 @@
  
 package com.metaring.springbootappexample.controller;
 
-import com.metaring.springbootappexample.model.PersonMessageResponseModel;
-import com.metaring.springbootappexample.model.PersonMessageModel;
 import com.metaring.springbootappexample.model.PersonResponseModel;
 import com.metaring.springbootappexample.service.PersonService;
-import org.springframework.messaging.handler.annotation.MessageExceptionHandler;
-import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.SendTo;
-import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.util.HtmlUtils;
 
 import java.util.HashMap;
 import java.util.List;
@@ -45,6 +38,7 @@ public class PersonController {
     public PersonController(PersonService personService) {
         this.personService = personService;
     }
+
     @Async("asyncExecutor")
     @GetMapping("/{lastName}")
     public CompletableFuture<String> getPersonsByLastName(@PathVariable("lastName") String lastName, Model model) throws ExecutionException, InterruptedException {
@@ -53,14 +47,5 @@ public class PersonController {
         responseModel.put("persons", personsByLastName.get());
         model.addAllAttributes(responseModel);
         return CompletableFuture.completedFuture("person");
-    }
-
-    @Async("asyncExecutor")
-    @MessageMapping("${messageMapping}")
-    @SendTo("/topic/greetings")
-    public CompletableFuture<PersonMessageResponseModel> greeting(PersonMessageModel message) throws Exception {
-        return CompletableFuture.completedFuture(
-                new PersonMessageResponseModel("Hello, " +
-                        HtmlUtils.htmlEscape(message.getFirstName() + " " + message.getLastName()) + "!"));
     }
 }

@@ -43,6 +43,6 @@ public class PersonResponseModel {
 
     @Override
     public String toString() {
-        return String.format("PersonResponseModel[firstName='%s', lastName='%s']", firstName, lastName);
+        return String.format("{\"firstName\":\"%s\", \"lastName\":\"%s\"}", firstName, lastName);
     }
 }

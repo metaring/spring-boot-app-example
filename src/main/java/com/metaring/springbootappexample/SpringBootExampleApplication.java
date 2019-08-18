@@ -41,6 +41,7 @@ public class SpringBootExampleApplication {
             repository.save(new Person("Vardan", "Hovhannisyan"));
             repository.save(new Person("David", "Palmer"));
             repository.save(new Person("Michelle", "Dessler"));
+            repository.save(new Person("John", "Doe"));
         };
     }
 }
