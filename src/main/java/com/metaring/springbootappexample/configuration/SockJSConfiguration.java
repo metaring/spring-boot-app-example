@@ -16,19 +16,18 @@
 
 package com.metaring.springbootappexample.configuration;
 
-import com.metaring.springbootappexample.controller.SockJSController;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
-import org.springframework.web.socket.server.standard.ServletServerContainerFactoryBean;
+
+import com.metaring.springbootappexample.controller.SockJSController;
 
 @Configuration
 @EnableWebSocket
 class SockJSConfiguration implements WebSocketConfigurer {
 
-    private SockJSController sockJSController;
+    private final SockJSController sockJSController;
 
     public SockJSConfiguration(SockJSController sockJSController) {
         this.sockJSController = sockJSController;

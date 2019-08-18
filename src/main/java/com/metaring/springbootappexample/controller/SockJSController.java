@@ -16,15 +16,6 @@
 
 package com.metaring.springbootappexample.controller;
 
-import com.metaring.springbootappexample.service.PersonService;
-import org.springframework.beans.factory.DisposableBean;
-import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.socket.CloseStatus;
-import org.springframework.web.socket.TextMessage;
-import org.springframework.web.socket.WebSocketSession;
-import org.springframework.web.socket.handler.AbstractWebSocketHandler;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -32,8 +23,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+
+import org.springframework.beans.factory.DisposableBean;
+import org.springframework.stereotype.Component;
+import org.springframework.web.socket.CloseStatus;
+import org.springframework.web.socket.TextMessage;
+import org.springframework.web.socket.WebSocketSession;
+import org.springframework.web.socket.handler.AbstractWebSocketHandler;
+
+import com.metaring.springbootappexample.service.PersonService;
 
 @Component
 public class SockJSController extends AbstractWebSocketHandler implements DisposableBean {
@@ -69,12 +68,6 @@ public class SockJSController extends AbstractWebSocketHandler implements Dispos
     private static final void forAllControllers(final Consumer<WebSocketSession> action) {
         synchronized (CONTROLLERS) {
             CONTROLLERS.forEach(controller -> controller.sessions.values().forEach(action::accept));
-        }
-    }
-
-    private static final void forAllControllers(final BiConsumer<WebSocketSession, SockJSController> action) {
-        synchronized (CONTROLLERS) {
-            CONTROLLERS.forEach(controller -> controller.sessions.values().forEach(session -> action.accept(session, controller)));
         }
     }
 

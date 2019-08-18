@@ -41,7 +41,7 @@ function connect() {
 
     $('#person').html('');
 
-     // Create a connection to http://localhost:8080/ws-notification
+     // Create a connection to http://localhost:8080/ws-p2p
      sockClient = new SockJS('/ws-p2p');
 
      // Open the connection
