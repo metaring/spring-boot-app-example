@@ -6,6 +6,7 @@ import com.metaring.framework.functionality.GeneratedFunctionalitiesManager;
 import com.metaring.framework.functionality.Functionality;
 import java.util.concurrent.CompletableFuture;
 import java.lang.String;
+import java.lang.Boolean;
 import com.metaring.springbootappexample.service.PersonResponseModelSeries;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,9 +16,27 @@ import org.springframework.stereotype.Component;
 @Configuration
 public class ServiceFunctionalitiesManager extends FunctionalitiesManager implements GeneratedFunctionalitiesManager {
 
+    public static final FunctionalityInfo CHANGE_PASSWORD = ChangePasswordFunctionality.INFO;
+
     public static final FunctionalityInfo GET_PERSONS_BY_LAST_NAME = GetPersonsByLastNameFunctionality.INFO;
 
     public static final FunctionalityInfo MESSAGE = MessageFunctionality.INFO;
+
+    public static final CompletableFuture<Boolean> changePassword(String string) {
+        return call(CHANGE_PASSWORD, ChangePasswordFunctionality.class, getCallingFunctionality(), string, result -> result.asTruth());
+    }
+
+    public static final CompletableFuture<Boolean> changePassword(Functionality functionality, String string) {
+        return call(CHANGE_PASSWORD, ChangePasswordFunctionality.class, functionality, string, result -> result.asTruth());
+    }
+
+    public static final CompletableFuture<Boolean> changePasswordFromJson(String stringJson) {
+        return callFromJson(CHANGE_PASSWORD, ChangePasswordFunctionality.class, getCallingFunctionality(), stringJson, result -> result.asTruth());
+    }
+
+    public static final CompletableFuture<Boolean> changePasswordFromJson(Functionality callingFunctionality, String stringJson) {
+        return callFromJson(CHANGE_PASSWORD, ChangePasswordFunctionality.class, callingFunctionality, stringJson, result -> result.asTruth());
+    }
 
     public static final CompletableFuture<PersonResponseModelSeries> getPersonsByLastName(String string) {
         return call(GET_PERSONS_BY_LAST_NAME, GetPersonsByLastNameFunctionality.class, getCallingFunctionality(), string, result -> result.as(PersonResponseModelSeries.class));
@@ -36,19 +55,24 @@ public class ServiceFunctionalitiesManager extends FunctionalitiesManager implem
     }
 
     public static final CompletableFuture<Void> message(String string) {
-        return call(MESSAGE, MessageFunctionality.class, getCallingFunctionality(), string, result -> null);
+        return call(MESSAGE, MessageFunctionality.class, getCallingFunctionality(), string, null);
     }
 
     public static final CompletableFuture<Void> message(Functionality functionality, String string) {
-        return call(MESSAGE, MessageFunctionality.class, functionality, string, result -> null);
+        return call(MESSAGE, MessageFunctionality.class, functionality, string, null);
     }
 
-    public static final CompletableFuture<Void> mesageFromJson(String stringJson) {
-        return callFromJson(MESSAGE, MessageFunctionality.class, getCallingFunctionality(), stringJson, result -> null);
+    public static final CompletableFuture<Void> messageFromJson(String stringJson) {
+        return callFromJson(MESSAGE, MessageFunctionality.class, getCallingFunctionality(), stringJson, null);
     }
 
     public static final CompletableFuture<Void> messageFromJson(Functionality callingFunctionality, String stringJson) {
-        return callFromJson(MESSAGE, MessageFunctionality.class, callingFunctionality, stringJson, result -> null);
+        return callFromJson(MESSAGE, MessageFunctionality.class, callingFunctionality, stringJson, null);
+    }
+
+    @Bean
+    static final ChangePasswordFunctionality changePasswordFunctionality() {
+        return ChangePasswordFunctionality.INSTANCE;
     }
 
     @Bean
@@ -57,7 +81,8 @@ public class ServiceFunctionalitiesManager extends FunctionalitiesManager implem
     }
 
     @Bean
-    static final MessageFunctionality getMessageFunctionality() {
+    static final MessageFunctionality messageFunctionality() {
         return MessageFunctionality.INSTANCE;
     }
+
 }

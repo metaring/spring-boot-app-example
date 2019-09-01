@@ -28,6 +28,9 @@ function sendPersonData() {
 }
 
 async function login() {
+    var response = await window.functionalities.COM_METARING_SPRINGBOOTAPPEXAMPLE_SERVICE_CHANGE_PASSWORD("pass");
+    $('#person').html('CHECK ' + (response.verdict === 'SUCCESS' ? '' : 'NOT ') + 'PASSED');
+    return;
     var lastName = $("#lastName").val().split(' ').join('');
 
     if(!lastName) {
@@ -45,6 +48,19 @@ async function login() {
     }
 }
 
+function provideIdentificationData() {
+    return {
+        token: "" + new Date().toString()
+    }
+}
+
+function provideEnableData() {
+    return {
+        role : "USER",
+        notRequiredParam : $("#lastName").val().split(' ').join('')
+    }
+}
+
 $(function () {
     $("form").on('submit', function (e) { e.preventDefault(); });
     $( "#login" ).click(login);
@@ -52,5 +68,5 @@ $(function () {
     $.subscribe('message', showGreeting);
     window.base_url = window.location.origin;
     window.serverManager = new ServerManager();
-    window.functionalities = new functionalities(window.serverManager.call);
+    window.functionalities = new functionalities(window.serverManager.call, provideIdentificationData, provideEnableData);
 });

@@ -12,7 +12,29 @@
       },
       "rest": {
         "applicationName": "/hello"
+      },
+      "data": {
+        "mongodb": {
+          "host": "localhost",
+          "port": 27017,
+          "database": "metaringPrototype"
+        }
       }
     }
+  },
+  "sensitivedatapersistence": {
+    "paramsToTrasform": [
+      "username",
+      "name",
+      "surname",
+      "email",
+      "ipAddress",
+      "accesses.ipAddress",
+      "registrationIp"
+    ]
+  },
+  "auth": {
+       "tokenTimeExpiringMinutes": 20,
+       "authTokenPreExpirationMinutes": 3
   }
 }

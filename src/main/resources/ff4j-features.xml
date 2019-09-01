@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ff4j xmlns="http://www.ff4j.org/schema/ff4j"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.ff4j.org/schema/ff4j http://ff4j.org/schema/ff4j-1.4.0.xsd">
+    <features>
+        <feature uid="com.metaring.springbootappexample.service.changePassword" enable="true">
+            <flipstrategy class="com.metaring.springbootappexample.strategy.JavascriptFlipStrategy">
+                <param name="script"><![CDATA[
+                    ENABLE_DATA && ENABLE_DATA.role && ENABLE_DATA.role.match(/USER|ADMIN/g).length > 0
+                ]]></param>
+            </flipstrategy>
+        </feature>
+    </features>
+</ff4j>
