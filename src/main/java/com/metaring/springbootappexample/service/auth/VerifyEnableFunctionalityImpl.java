@@ -26,6 +26,8 @@ public class VerifyEnableFunctionalityImpl extends VerifyEnableFunctionality {
         @SuppressWarnings("unchecked")
         Map<String, Object> context = (Map<String, Object>) getContext().getData().clone();
         context.put("ENABLE_DATA", input);
+        // TODO uncomment if want to read the properties defined between <properties></properties>
+        // context.put("FF4J", ff4j);
         FlippingExecutionContext flippingExecutionContext = new FlippingExecutionContext(context);
         List<String> functionalities = new ArrayList<>();
 

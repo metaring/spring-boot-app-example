@@ -27,6 +27,7 @@ import java.util.Map;
 
 import org.ff4j.core.FeatureStore;
 import org.ff4j.core.FlippingExecutionContext;
+import org.ff4j.property.Property;
 import org.ff4j.strategy.AbstractFlipStrategy;
 import org.mozilla.javascript.Context;
 
@@ -39,6 +40,7 @@ public class JavascriptFlipStrategy extends AbstractFlipStrategy {
     private static final long serialVersionUID = 5103342692592508589L;
 
     private static final String PARAM_MODULAR_NAME = "modular";
+    private static final String NEW_LINE_SPLITERATOR = "\n";
 
     private static final Map<String, Map<String, String>> PARAMETERS = new HashMap<>();
     private static final Map<String, List<String>> ORDERED_PARAMETERS = new HashMap<>();
@@ -77,7 +79,7 @@ public class JavascriptFlipStrategy extends AbstractFlipStrategy {
             return;
         }
         StringBuilder sb = new StringBuilder();
-        featureOrderedParameters.forEach(it -> sb.append(featureParameters.get(it)).append("\n"));
+        featureOrderedParameters.forEach(it -> sb.append(featureParameters.get(it)).append(NEW_LINE_SPLITERATOR));
         featureOrderedParameters.clear();
         featureParameters.clear();
         featureOrderedParameters.add("script");
@@ -124,6 +126,17 @@ public class JavascriptFlipStrategy extends AbstractFlipStrategy {
             }
             sb.append("context['").append(it).append("'] = ").append(elem == null ? "null" : elem.toString()).append(";\n");
         });
+        // TODO The way to read the properties defined between <properties></properties>, but when adding in context then rhino throwing } exception
+//        FF4j ff4j = (FF4j) contextParameters.get("FF4J");
+//        Map<String, Property<?>> properties = ff4j.getProperties();
+        // The way to read the properties defined between <custom-properties></custom-properties>
+        Map<String, Property<?>> customProperties = fStore.read(featureName).getCustomProperties();
+        if (!customProperties.get("modular").asBoolean()) {
+            String mergedScript = String.join(NEW_LINE_SPLITERATOR,
+                    tryLoadFile(customProperties.get("scriptPath").asString()),
+                    featureParameters.get("script"));
+            featureParameters.put("script", mergedScript); // will replace existing value for script key
+        }
         String vars = sb.toString();
         Context context = Context.getCurrentContext();
         context = context != null ? context : Context.enter();
