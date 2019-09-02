@@ -38,8 +38,10 @@ public class JavascriptFlipStrategy extends AbstractFlipStrategy {
 
     private static final long serialVersionUID = 5103342692592508589L;
 
-    private static final Map<String, String> PARAMETERS = new HashMap<>();
-    private static final List<String> ORDERED_PARAMETERS = new ArrayList<>();
+    private static final String PARAM_MODULAR_NAME = "modular";
+
+    private static final Map<String, Map<String, String>> PARAMETERS = new HashMap<>();
+    private static final Map<String, List<String>> ORDERED_PARAMETERS = new HashMap<>();
 
     private static final Field PARAMETERS_FIELD;
     static {
@@ -54,12 +56,32 @@ public class JavascriptFlipStrategy extends AbstractFlipStrategy {
 
     @Override
     public void init(String featureName, Map<String, String> initParam) {
-        if(ObjectUtil.isNullOrEmpty(initParam) || !ObjectUtil.isNullOrEmpty(PARAMETERS)) {
+        if(ObjectUtil.isNullOrEmpty(initParam) || PARAMETERS.containsKey(featureName)) {
             return;
         }
-        initParam.forEach((key, value) -> PARAMETERS.put(new String(key), tryLoadFile(new String(value).trim())));
-        ORDERED_PARAMETERS.addAll(PARAMETERS.keySet());
-        Collections.sort(ORDERED_PARAMETERS);
+        PARAMETERS.put(featureName, new HashMap<>());
+        ORDERED_PARAMETERS.put(featureName, new ArrayList<>());
+        final Map<String, String> featureParameters = PARAMETERS.get(featureName);
+        final List<String> featureOrderedParameters = ORDERED_PARAMETERS.get(featureName);
+        final boolean[] modular = {false};
+        initParam.forEach((key, value) -> {
+            if(key.equals(PARAM_MODULAR_NAME)) {
+                modular[0] = Boolean.parseBoolean(value);
+                return;
+            }
+            featureParameters.put(new String(key), tryLoadFile(new String(value).trim()));
+        });
+        featureOrderedParameters.addAll(featureParameters.keySet());
+        Collections.sort(featureOrderedParameters);
+        if(modular[0] || featureOrderedParameters.size() == 1) {
+            return;
+        }
+        StringBuilder sb = new StringBuilder();
+        featureOrderedParameters.forEach(it -> sb.append(featureParameters.get(it)).append("\n"));
+        featureOrderedParameters.clear();
+        featureParameters.clear();
+        featureOrderedParameters.add("script");
+        featureParameters.put("script", sb.toString());
     }
 
     private static final String tryLoadFile(String value) {
@@ -76,7 +98,7 @@ public class JavascriptFlipStrategy extends AbstractFlipStrategy {
     }
 
     @SuppressWarnings("unchecked")
-    private static final Map<String, Object> extractParameters(FlippingExecutionContext ctx) {
+    private static final Map<String, Object> extractParametersFromContext(FlippingExecutionContext ctx) {
         if (ctx == null) {
             return null;
         }
@@ -89,25 +111,25 @@ public class JavascriptFlipStrategy extends AbstractFlipStrategy {
 
     @Override
     public boolean evaluate(String featureName, FeatureStore fStore, FlippingExecutionContext ctx) {
-        if (ObjectUtil.isNullOrEmpty(PARAMETERS)) {
+        final Map<String, String> featureParameters = PARAMETERS.get(featureName);
+        if (ObjectUtil.isNullOrEmpty(featureParameters)) {
             return true;
         }
-        final Map<String, Object> parameters = extractParameters(ctx);
-        StringBuilder sb = new StringBuilder();
-        parameters.keySet().forEach(it -> {
-            Object elem = parameters.get(it);
+        final Map<String, Object> contextParameters = extractParametersFromContext(ctx);
+        StringBuilder sb = new StringBuilder("var context = {};\n");
+        contextParameters.keySet().forEach(it -> {
+            Object elem = contextParameters.get(it);
             if(elem != null && elem instanceof String) {
                 elem = "'" + elem + "'";
             }
-            sb.append("this['").append(it).append("'] = ").append(elem == null ? "null" : elem.toString()).append(";\n");
+            sb.append("context['").append(it).append("'] = ").append(elem == null ? "null" : elem.toString()).append(";\n");
         });
         String vars = sb.toString();
-        for (String key : ORDERED_PARAMETERS) {
+        Context context = Context.getCurrentContext();
+        context = context != null ? context : Context.enter();
+        for (String key : ORDERED_PARAMETERS.get(featureName)) {
             try {
-                Context context = Context.getCurrentContext();
-                Object jsObjectResult = (context = context != null ? context : Context.enter()).compileString((vars + PARAMETERS.get(key)), key, 0, null).exec(context, context.initStandardObjects());
-                boolean result = Boolean.parseBoolean(Context.toString(jsObjectResult));
-                if(!result) {
+                if(!Boolean.parseBoolean(Context.toString(context.compileString((vars + featureParameters.get(key)), key, 0, null).exec(context, context.initSafeStandardObjects())))) {
                     return false;
                 }
             } catch (Exception e) {
