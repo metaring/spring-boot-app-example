@@ -20,11 +20,11 @@ package com.metaring.springbootappexample.strategy;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.ff4j.core.FeatureStore;
 import org.ff4j.core.FlippingExecutionContext;
@@ -44,13 +44,14 @@ public class JavascriptFlipStrategy extends AbstractFlipStrategy {
     private static final String PARAM_MODULAR_NAME = "js_modular";
     private static final String PARAM_LIBRARY_NAME_PREFIX = "js_lib_";
     private static final String NEW_LINE_SPLITERATOR = "\n";
-    private static final Charset CHARSET = Charset.forName("UTF-8");
+    private static final Charset CHARSET = StandardCharsets.UTF_8;
 
-    private static final Map<String, Map<String, String>> PARAMETERS = new HashMap<>();
-    private static final Map<String, List<String>> ORDERED_PARAMETERS = new HashMap<>();
-    private static final Map<String, String> LIBRARIES = new HashMap<>();
+    private static final Map<String, Map<String, String>> PARAMETERS = new TreeMap<>();
+//    private static final Map<String, List<String>> ORDERED_PARAMETERS = new HashMap<>();
+    private static final Map<String, String> LIBRARIES = new TreeMap<>();
 
     private static final Field PARAMETERS_FIELD;
+
     static {
         Field f = null;
         try {
@@ -67,12 +68,12 @@ public class JavascriptFlipStrategy extends AbstractFlipStrategy {
             return;
         }
         PARAMETERS.put(featureName, new HashMap<>());
-        ORDERED_PARAMETERS.put(featureName, new ArrayList<>());
+//        ORDERED_PARAMETERS.put(featureName, new ArrayList<>());
         final Map<String, String> featureParameters = PARAMETERS.get(featureName);
-        final List<String> featureOrderedParameters = ORDERED_PARAMETERS.get(featureName);
+//        final List<String> featureOrderedParameters = ORDERED_PARAMETERS.get(featureName);
         initParam.forEach((key, value) -> featureParameters.put(new String(key), tryLoadFile(new String(value).trim())));
-        featureOrderedParameters.addAll(featureParameters.keySet());
-        Collections.sort(featureOrderedParameters);
+//        featureOrderedParameters.addAll(featureParameters.keySet());
+//        Collections.sort(featureOrderedParameters);
     }
 
     private static final String tryLoadFile(String value) {
@@ -100,42 +101,38 @@ public class JavascriptFlipStrategy extends AbstractFlipStrategy {
         return null;
     }
 
-    private final String setupCustomVars(Map<String, String> featureParameters, List<String> featureOrderedParameters, Map<String, Property<?>> customProperties) {
+    private final String setupCustomVars(Map<String, String> featureParameters, Map<String, Property<?>> customProperties) {
         Map<String, Property<?>> globalProperties = FF4JConfiguration.GLOBAL_PROPERTIES;
-        boolean modular = !globalProperties.containsKey(PARAM_MODULAR_NAME) ? false : globalProperties.get(PARAM_MODULAR_NAME).asBoolean();
-        modular = !customProperties.containsKey(PARAM_MODULAR_NAME) ? modular : customProperties.get(PARAM_MODULAR_NAME).asBoolean();
+        boolean modular = globalProperties.containsKey(PARAM_MODULAR_NAME) && globalProperties.get(PARAM_MODULAR_NAME).asBoolean();
+        modular = customProperties.containsKey(PARAM_MODULAR_NAME) ? customProperties.get(PARAM_MODULAR_NAME).asBoolean() : modular;
 
-        if (!modular && featureOrderedParameters.size() > 1) {
+        if (!modular && featureParameters.size() > 1) {
             StringBuilder sb = new StringBuilder();
-            featureOrderedParameters.forEach(it -> sb.append(featureParameters.get(it)).append(NEW_LINE_SPLITERATOR));
-            featureOrderedParameters.clear();
+            featureParameters.forEach((key, value) -> sb.append(value).append(NEW_LINE_SPLITERATOR));
+//            featureOrderedParameters.clear();
             featureParameters.clear();
-            featureOrderedParameters.add("script");
+//            featureOrderedParameters.add("script");
             featureParameters.put("script", sb.toString());
         }
-
-        List<String> libraryNames = new ArrayList<>();
-        List<String> globalLibraryNames = new ArrayList<>();
-        globalProperties.keySet().stream().filter(it -> it.startsWith(PARAM_LIBRARY_NAME_PREFIX)).forEach(globalLibraryNames::add);
-        libraryNames.addAll(globalLibraryNames);
-        customProperties.keySet().stream().filter(it -> it.startsWith(PARAM_LIBRARY_NAME_PREFIX) && !libraryNames.contains(it)).forEach(globalLibraryNames::add);
-        globalLibraryNames.forEach(it -> {
-            boolean delete = false;
-            try {
-                delete = customProperties.containsKey(it) && !customProperties.get(it).asBoolean();
-            } catch(Exception e) {
-            }
-            if(delete) {
-                libraryNames.remove(it);
-            }
-        });
-        Collections.sort(libraryNames);
         StringBuilder libraries = new StringBuilder();
-        libraryNames.forEach(it -> {
+//        ConcurrentSkipListSet globalLibraryNames = new ConcurrentSkipListSet();
+        Stream.concat(globalProperties.keySet().stream(), customProperties.keySet().stream()
+                .filter(it -> !globalProperties.containsKey(it) || customProperties.get(it).asBoolean()))
+                .filter(it -> it.startsWith(PARAM_LIBRARY_NAME_PREFIX))
+                .distinct()
+                .sorted()
+//         .forEach(it -> {
+//            Map<String, Property<?>> map = globalProperties.containsKey(it) ? globalProperties : customProperties;
+//            libraries
+//                    .append(tryLoadFile(map.get(it).asString()))
+//                    .append(NEW_LINE_SPLITERATOR);
+//        });
+        .collect((it, value) -> {
             Map<String, Property<?>> map = globalProperties.containsKey(it) ? globalProperties : customProperties;
-            libraries.append(tryLoadFile(map.get(it).asString())).append(NEW_LINE_SPLITERATOR);
+         Collectors.joining();
+         return null;
         });
-        return libraries.toString().trim();
+//        return libraries.toString().trim();
     }
 
     @Override
@@ -144,10 +141,10 @@ public class JavascriptFlipStrategy extends AbstractFlipStrategy {
         if (ObjectUtil.isNullOrEmpty(featureParameters)) {
             return true;
         }
-        final List<String> featureOrderedParameters = ORDERED_PARAMETERS.get(featureName);
+//        final List<String> featureOrderedParameters = ORDERED_PARAMETERS.get(featureName);
         String libraries = LIBRARIES.get(featureName);
         if (libraries == null) {
-            LIBRARIES.put(featureName, libraries = setupCustomVars(featureParameters, featureOrderedParameters, fStore.read(featureName).getCustomProperties()));
+            LIBRARIES.put(featureName, libraries = setupCustomVars(featureParameters, fStore.read(featureName).getCustomProperties()));
         }
         final Map<String, Object> contextParameters = extractParametersFromContext(ctx);
         StringBuilder sb = new StringBuilder("var context = {};").append(NEW_LINE_SPLITERATOR);
@@ -161,7 +158,7 @@ public class JavascriptFlipStrategy extends AbstractFlipStrategy {
         final String vars = sb.toString();
         Context context = Context.getCurrentContext();
         context = context != null ? context : Context.enter();
-        for (String key : featureOrderedParameters) {
+        for (String key : featureParameters.keySet()) {
             try {
                 if (!Boolean.parseBoolean(Context.toString(context.compileString((libraries + vars + featureParameters.get(key)), key, 0, null).exec(context, context.initSafeStandardObjects())))) {
                     return false;
