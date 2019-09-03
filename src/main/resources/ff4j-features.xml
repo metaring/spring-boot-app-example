@@ -11,8 +11,8 @@
         <feature uid="com.metaring.springbootappexample.service.changePassword" enable="true">
             <custom-properties>
                 <property name="js_modular" value="false" type="org.ff4j.property.PropertyBoolean"/>
-                <property name="js_lib_2" value="src/main/resources/static/functionalities.js" type="org.ff4j.property.PropertyString"/>
-                <property name="js_lib_1" value="true" type="org.ff4j.property.PropertyBoolean"/>
+                <property name="js_lib_2" value="src/main/resources/static/functionalities.js"/>
+                <property name="js_lib_1" value="false"/>
             </custom-properties>
             <flipstrategy class="com.metaring.springbootappexample.strategy.JavascriptFlipStrategy">
                 <param name="script7"><![CDATA[

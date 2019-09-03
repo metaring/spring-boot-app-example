@@ -21,9 +21,9 @@ import java.io.File;
 import java.lang.reflect.Field;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.stream.Collectors;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.stream.Stream;
 
 import org.ff4j.core.FeatureStore;
@@ -107,9 +107,16 @@ public class JavascriptFlipStrategy extends AbstractFlipStrategy {
             featureParameters.clear();
             featureParameters.put("script", sb.toString());
         }
-        String libraries = Stream.concat(globalProperties.keySet().stream(),
-                customProperties.keySet().stream().filter(it -> !globalProperties.containsKey(it) || customProperties.get(it).asBoolean())
-        ).filter(it -> it.startsWith(PARAM_LIBRARY_NAME_PREFIX))
+        String libraries = Stream.concat(globalProperties.keySet().stream(), customProperties.keySet().stream())
+                .filter(it -> {
+                    if(!it.startsWith(PARAM_LIBRARY_NAME_PREFIX)) {
+                        return false;
+                    }
+                    if(globalProperties.containsKey(it) && customProperties.containsKey(it) && !"true".equals(customProperties.get(it))) {
+                        return false;
+                    }
+                    return true;
+                })
                 .distinct()
                 .sorted()
                 .collect(
