@@ -47,7 +47,6 @@ public class JavascriptFlipStrategy extends AbstractFlipStrategy {
     private static final Charset CHARSET = StandardCharsets.UTF_8;
 
     private static final Map<String, Map<String, String>> PARAMETERS = new TreeMap<>();
-//    private static final Map<String, List<String>> ORDERED_PARAMETERS = new HashMap<>();
     private static final Map<String, String> LIBRARIES = new TreeMap<>();
 
     private static final Field PARAMETERS_FIELD;
@@ -68,12 +67,8 @@ public class JavascriptFlipStrategy extends AbstractFlipStrategy {
             return;
         }
         PARAMETERS.put(featureName, new HashMap<>());
-//        ORDERED_PARAMETERS.put(featureName, new ArrayList<>());
         final Map<String, String> featureParameters = PARAMETERS.get(featureName);
-//        final List<String> featureOrderedParameters = ORDERED_PARAMETERS.get(featureName);
-        initParam.forEach((key, value) -> featureParameters.put(new String(key), tryLoadFile(new String(value).trim())));
-//        featureOrderedParameters.addAll(featureParameters.keySet());
-//        Collections.sort(featureOrderedParameters);
+        initParam.forEach((key, value) -> featureParameters.put(key, tryLoadFile(value.trim())));
     }
 
     private static final String tryLoadFile(String value) {
@@ -109,30 +104,23 @@ public class JavascriptFlipStrategy extends AbstractFlipStrategy {
         if (!modular && featureParameters.size() > 1) {
             StringBuilder sb = new StringBuilder();
             featureParameters.forEach((key, value) -> sb.append(value).append(NEW_LINE_SPLITERATOR));
-//            featureOrderedParameters.clear();
             featureParameters.clear();
-//            featureOrderedParameters.add("script");
             featureParameters.put("script", sb.toString());
         }
-        StringBuilder libraries = new StringBuilder();
-//        ConcurrentSkipListSet globalLibraryNames = new ConcurrentSkipListSet();
-        Stream.concat(globalProperties.keySet().stream(), customProperties.keySet().stream()
-                .filter(it -> !globalProperties.containsKey(it) || customProperties.get(it).asBoolean()))
-                .filter(it -> it.startsWith(PARAM_LIBRARY_NAME_PREFIX))
+        String libraries = Stream.concat(globalProperties.keySet().stream(),
+                customProperties.keySet().stream().filter(it -> !globalProperties.containsKey(it) || customProperties.get(it).asBoolean())
+        ).filter(it -> it.startsWith(PARAM_LIBRARY_NAME_PREFIX))
                 .distinct()
                 .sorted()
-//         .forEach(it -> {
-//            Map<String, Property<?>> map = globalProperties.containsKey(it) ? globalProperties : customProperties;
-//            libraries
-//                    .append(tryLoadFile(map.get(it).asString()))
-//                    .append(NEW_LINE_SPLITERATOR);
-//        });
-        .collect((it, value) -> {
-            Map<String, Property<?>> map = globalProperties.containsKey(it) ? globalProperties : customProperties;
-         Collectors.joining();
-         return null;
-        });
-//        return libraries.toString().trim();
+                .collect(
+                        StringBuilder::new,
+                        (response, element) -> {
+                            Map<String, Property<?>> map = globalProperties.containsKey(element) ? globalProperties : customProperties;
+                            response.append(tryLoadFile(map.get(element).asString())).append(NEW_LINE_SPLITERATOR);
+                        },
+                        StringBuilder::append
+                ).toString();
+        return libraries.trim();
     }
 
     @Override
@@ -141,7 +129,6 @@ public class JavascriptFlipStrategy extends AbstractFlipStrategy {
         if (ObjectUtil.isNullOrEmpty(featureParameters)) {
             return true;
         }
-//        final List<String> featureOrderedParameters = ORDERED_PARAMETERS.get(featureName);
         String libraries = LIBRARIES.get(featureName);
         if (libraries == null) {
             LIBRARIES.put(featureName, libraries = setupCustomVars(featureParameters, fStore.read(featureName).getCustomProperties()));
