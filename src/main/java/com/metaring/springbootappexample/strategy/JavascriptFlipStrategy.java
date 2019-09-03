@@ -1,4 +1,5 @@
 /*
+
  *    Copyright 2019 MetaRing s.r.l.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,16 +35,20 @@ import org.mozilla.javascript.Context;
 import com.google.common.io.Files;
 import com.metaring.framework.util.ObjectUtil;
 import com.metaring.framework.util.StringUtil;
+import com.metaring.springbootappexample.configuration.FF4JConfiguration;
 
 public class JavascriptFlipStrategy extends AbstractFlipStrategy {
 
     private static final long serialVersionUID = 5103342692592508589L;
 
-    private static final String PARAM_MODULAR_NAME = "modular";
+    private static final String PARAM_MODULAR_NAME = "js_modular";
+    private static final String PARAM_LIBRARY_NAME_PREFIX = "js_lib_";
     private static final String NEW_LINE_SPLITERATOR = "\n";
+    private static final Charset CHARSET = Charset.forName("UTF-8");
 
     private static final Map<String, Map<String, String>> PARAMETERS = new HashMap<>();
     private static final Map<String, List<String>> ORDERED_PARAMETERS = new HashMap<>();
+    private static final Map<String, String> LIBRARIES = new HashMap<>();
 
     private static final Field PARAMETERS_FIELD;
     static {
@@ -58,43 +63,27 @@ public class JavascriptFlipStrategy extends AbstractFlipStrategy {
 
     @Override
     public void init(String featureName, Map<String, String> initParam) {
-        if(ObjectUtil.isNullOrEmpty(initParam) || PARAMETERS.containsKey(featureName)) {
+        if (ObjectUtil.isNullOrEmpty(initParam) || PARAMETERS.containsKey(featureName)) {
             return;
         }
         PARAMETERS.put(featureName, new HashMap<>());
         ORDERED_PARAMETERS.put(featureName, new ArrayList<>());
         final Map<String, String> featureParameters = PARAMETERS.get(featureName);
         final List<String> featureOrderedParameters = ORDERED_PARAMETERS.get(featureName);
-        final boolean[] modular = {false};
-        initParam.forEach((key, value) -> {
-            if(key.equals(PARAM_MODULAR_NAME)) {
-                modular[0] = Boolean.parseBoolean(value);
-                return;
-            }
-            featureParameters.put(new String(key), tryLoadFile(new String(value).trim()));
-        });
+        initParam.forEach((key, value) -> featureParameters.put(new String(key), tryLoadFile(new String(value).trim())));
         featureOrderedParameters.addAll(featureParameters.keySet());
         Collections.sort(featureOrderedParameters);
-        if(modular[0] || featureOrderedParameters.size() == 1) {
-            return;
-        }
-        StringBuilder sb = new StringBuilder();
-        featureOrderedParameters.forEach(it -> sb.append(featureParameters.get(it)).append(NEW_LINE_SPLITERATOR));
-        featureOrderedParameters.clear();
-        featureParameters.clear();
-        featureOrderedParameters.add("script");
-        featureParameters.put("script", sb.toString());
     }
 
     private static final String tryLoadFile(String value) {
-        if(StringUtil.isNullOrEmpty(value)) {
+        if (StringUtil.isNullOrEmpty(value)) {
             return value == null ? null : value.trim();
         }
         try {
             final StringBuilder sb = new StringBuilder();
-            Files.readLines(new File(value.trim()), Charset.defaultCharset()).forEach(it -> sb.append(it).append('\n'));
+            Files.readLines(new File(value.trim()), CHARSET).forEach(it -> sb.append(it).append(NEW_LINE_SPLITERATOR));
             return sb.toString().trim();
-        } catch(Exception e) {
+        } catch (Exception e) {
         }
         return value.trim();
     }
@@ -111,38 +100,70 @@ public class JavascriptFlipStrategy extends AbstractFlipStrategy {
         return null;
     }
 
+    private final String setupCustomVars(Map<String, String> featureParameters, List<String> featureOrderedParameters, Map<String, Property<?>> customProperties) {
+        Map<String, Property<?>> globalProperties = FF4JConfiguration.GLOBAL_PROPERTIES;
+        boolean modular = !globalProperties.containsKey(PARAM_MODULAR_NAME) ? false : globalProperties.get(PARAM_MODULAR_NAME).asBoolean();
+        modular = !customProperties.containsKey(PARAM_MODULAR_NAME) ? modular : customProperties.get(PARAM_MODULAR_NAME).asBoolean();
+
+        if (!modular && featureOrderedParameters.size() > 1) {
+            StringBuilder sb = new StringBuilder();
+            featureOrderedParameters.forEach(it -> sb.append(featureParameters.get(it)).append(NEW_LINE_SPLITERATOR));
+            featureOrderedParameters.clear();
+            featureParameters.clear();
+            featureOrderedParameters.add("script");
+            featureParameters.put("script", sb.toString());
+        }
+
+        List<String> libraryNames = new ArrayList<>();
+        List<String> globalLibraryNames = new ArrayList<>();
+        globalProperties.keySet().stream().filter(it -> it.startsWith(PARAM_LIBRARY_NAME_PREFIX)).forEach(globalLibraryNames::add);
+        libraryNames.addAll(globalLibraryNames);
+        customProperties.keySet().stream().filter(it -> it.startsWith(PARAM_LIBRARY_NAME_PREFIX) && !libraryNames.contains(it)).forEach(globalLibraryNames::add);
+        globalLibraryNames.forEach(it -> {
+            boolean delete = false;
+            try {
+                delete = customProperties.containsKey(it) && !customProperties.get(it).asBoolean();
+            } catch(Exception e) {
+            }
+            if(delete) {
+                libraryNames.remove(it);
+            }
+        });
+        Collections.sort(libraryNames);
+        StringBuilder libraries = new StringBuilder();
+        libraryNames.forEach(it -> {
+            Map<String, Property<?>> map = globalProperties.containsKey(it) ? globalProperties : customProperties;
+            libraries.append(tryLoadFile(map.get(it).asString())).append(NEW_LINE_SPLITERATOR);
+        });
+        return libraries.toString().trim();
+    }
+
     @Override
     public boolean evaluate(String featureName, FeatureStore fStore, FlippingExecutionContext ctx) {
         final Map<String, String> featureParameters = PARAMETERS.get(featureName);
         if (ObjectUtil.isNullOrEmpty(featureParameters)) {
             return true;
         }
+        final List<String> featureOrderedParameters = ORDERED_PARAMETERS.get(featureName);
+        String libraries = LIBRARIES.get(featureName);
+        if (libraries == null) {
+            LIBRARIES.put(featureName, libraries = setupCustomVars(featureParameters, featureOrderedParameters, fStore.read(featureName).getCustomProperties()));
+        }
         final Map<String, Object> contextParameters = extractParametersFromContext(ctx);
-        StringBuilder sb = new StringBuilder("var context = {};\n");
+        StringBuilder sb = new StringBuilder("var context = {};").append(NEW_LINE_SPLITERATOR);
         contextParameters.keySet().forEach(it -> {
             Object elem = contextParameters.get(it);
-            if(elem != null && elem instanceof String) {
+            if (elem != null && elem instanceof String) {
                 elem = "'" + elem + "'";
             }
-            sb.append("context['").append(it).append("'] = ").append(elem == null ? "null" : elem.toString()).append(";\n");
+            sb.append("context['").append(it).append("'] = ").append(elem == null ? "null" : elem.toString()).append(";").append(NEW_LINE_SPLITERATOR);
         });
-        // TODO The way to read the properties defined between <properties></properties>, but when adding in context then rhino throwing } exception
-//        FF4j ff4j = (FF4j) contextParameters.get("FF4J");
-//        Map<String, Property<?>> properties = ff4j.getProperties();
-        // The way to read the properties defined between <custom-properties></custom-properties>
-        Map<String, Property<?>> customProperties = fStore.read(featureName).getCustomProperties();
-        if (!customProperties.get("modular").asBoolean()) {
-            String mergedScript = String.join(NEW_LINE_SPLITERATOR,
-                    tryLoadFile(customProperties.get("scriptPath").asString()),
-                    featureParameters.get("script"));
-            featureParameters.put("script", mergedScript); // will replace existing value for script key
-        }
-        String vars = sb.toString();
+        final String vars = sb.toString();
         Context context = Context.getCurrentContext();
         context = context != null ? context : Context.enter();
-        for (String key : ORDERED_PARAMETERS.get(featureName)) {
+        for (String key : featureOrderedParameters) {
             try {
-                if(!Boolean.parseBoolean(Context.toString(context.compileString((vars + featureParameters.get(key)), key, 0, null).exec(context, context.initSafeStandardObjects())))) {
+                if (!Boolean.parseBoolean(Context.toString(context.compileString((libraries + vars + featureParameters.get(key)), key, 0, null).exec(context, context.initSafeStandardObjects())))) {
                     return false;
                 }
             } catch (Exception e) {
