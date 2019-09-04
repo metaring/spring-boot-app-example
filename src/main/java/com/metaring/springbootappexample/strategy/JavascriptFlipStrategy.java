@@ -18,6 +18,7 @@
 package com.metaring.springbootappexample.strategy;
 
 import java.io.File;
+import java.io.Reader;
 import java.lang.reflect.Field;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -26,6 +27,8 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Stream;
 
+import jdk.nashorn.api.scripting.JSObject;
+import jdk.nashorn.api.scripting.NashornException;
 import org.ff4j.core.FeatureStore;
 import org.ff4j.core.FlippingExecutionContext;
 import org.ff4j.property.Property;
@@ -36,6 +39,12 @@ import com.google.common.io.Files;
 import com.metaring.framework.util.ObjectUtil;
 import com.metaring.framework.util.StringUtil;
 import com.metaring.springbootappexample.configuration.FF4JConfiguration;
+import org.mozilla.javascript.RhinoException;
+
+import javax.script.ScriptContext;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
 
 public class JavascriptFlipStrategy extends AbstractFlipStrategy {
 
@@ -163,5 +172,36 @@ public class JavascriptFlipStrategy extends AbstractFlipStrategy {
             }
         }
         return true;
+    }
+    // TODO Experimental future, will be refactored in future
+    public static void main(String[] args) throws Exception {
+        ScriptEngineManager manager = new ScriptEngineManager();
+        ScriptEngine engine = manager.getEngineByName("nashorn");
+        try {
+            ScriptContext context = engine.getContext();
+            Reader reader = context.getReader();
+            engine.eval("throw new com.metaring.springbootappexample.exception.MetaRingException('I am custom made exception');");
+        } catch (ScriptException se) {
+            // get the original cause
+            Throwable cause = se.getCause();
+            // in this case, the cause is a nashorn exception
+            if (cause instanceof NashornException) {
+                NashornException ne = (NashornException)cause;
+                // Access the underlying ECMAScript error object thrown
+                Object obj = ne.getEcmaError();
+                // print ECMA object 'as is'
+                System.out.println(obj);
+                // In this example, the thrown ECMAScript object is
+                // an instanceof Error. Script objects are accessible
+                // as JSObject in java code.
+                if (obj instanceof JSObject) {
+                    JSObject jsObj = (JSObject)obj;
+                    System.out.println(jsObj.getMember("message"));
+                    System.out.println(jsObj.getMember("name"));
+                    // access nashorn specific 'stack' property
+                    System.out.println("stack trace: " + jsObj.getMember("stack"));
+                }
+            }
+        }
     }
 }
