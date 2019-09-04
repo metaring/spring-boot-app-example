@@ -18,7 +18,6 @@
 package com.metaring.springbootappexample.strategy;
 
 import java.io.File;
-import java.io.Reader;
 import java.lang.reflect.Field;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -39,9 +38,6 @@ import com.google.common.io.Files;
 import com.metaring.framework.util.ObjectUtil;
 import com.metaring.framework.util.StringUtil;
 import com.metaring.springbootappexample.configuration.FF4JConfiguration;
-import org.mozilla.javascript.RhinoException;
-
-import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
@@ -164,6 +160,7 @@ public class JavascriptFlipStrategy extends AbstractFlipStrategy {
         for (String key : featureParameters.keySet()) {
             try {
                 if (!Boolean.parseBoolean(Context.toString(context.compileString((libraries + vars + featureParameters.get(key)), key, 0, null).exec(context, context.initSafeStandardObjects())))) {
+                    executeScript("throw new com.metaring.springbootappexample.exception.MetaRingException('I am custom made exception');");
                     return false;
                 }
             } catch (Exception e) {
@@ -173,14 +170,16 @@ public class JavascriptFlipStrategy extends AbstractFlipStrategy {
         }
         return true;
     }
-    // TODO Experimental future, will be refactored in future
-    public static void main(String[] args) throws Exception {
+
+    /**
+     * Executes the specified script.
+     * The default <code>ScriptContext</code> for the <code>ScriptEngine</code> is used.
+     */
+    private final void executeScript(String script){
         ScriptEngineManager manager = new ScriptEngineManager();
         ScriptEngine engine = manager.getEngineByName("nashorn");
         try {
-            ScriptContext context = engine.getContext();
-            Reader reader = context.getReader();
-            engine.eval("throw new com.metaring.springbootappexample.exception.MetaRingException('I am custom made exception');");
+            engine.eval(script);
         } catch (ScriptException se) {
             // get the original cause
             Throwable cause = se.getCause();
