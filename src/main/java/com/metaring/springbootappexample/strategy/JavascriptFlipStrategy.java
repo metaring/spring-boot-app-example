@@ -162,11 +162,10 @@ public class JavascriptFlipStrategy extends AbstractFlipStrategy {
             try {
                 context.setOptimizationLevel(-1); // must use interpreter mode
                 Script script = context.compileString((libraries + vars + featureParameters.get(key)), key, 0, null);
-                Context.getCurrentContext().executeScriptWithContinuations(script, context.initStandardObjects());
 //                JAVASCRIPT_ENGINE.eval(libraries + vars + featureParameters.get(key));
-                /*if (!Boolean.parseBoolean(Context.toString(context.compileString((libraries + vars + featureParameters.get(key)), key, 0, null).exec(context, context.initSafeStandardObjects())))) {
+                if (!Boolean.parseBoolean(Context.toString(Context.getCurrentContext().executeScriptWithContinuations(script, context.initStandardObjects())))) {
                     return false;
-                }*/
+                }
             } catch (Exception e) {
                 Throwable ex = e;
                 while (ex.getCause() != null) {
