@@ -39,6 +39,7 @@ import com.google.common.io.Files;
 import com.metaring.framework.util.ObjectUtil;
 import com.metaring.framework.util.StringUtil;
 import com.metaring.springbootappexample.configuration.FF4JConfiguration;
+import org.mozilla.javascript.Script;
 
 public class JavascriptFlipStrategy extends AbstractFlipStrategy {
 
@@ -159,7 +160,10 @@ public class JavascriptFlipStrategy extends AbstractFlipStrategy {
         context = context != null ? context : Context.enter();
         for (String key : featureParameters.keySet()) {
             try {
-                JAVASCRIPT_ENGINE.eval(libraries + vars + featureParameters.get(key));
+                context.setOptimizationLevel(-1); // must use interpreter mode
+                Script script = context.compileString((libraries + vars + featureParameters.get(key)), key, 0, null);
+                Context.getCurrentContext().executeScriptWithContinuations(script, context.initStandardObjects());
+//                JAVASCRIPT_ENGINE.eval(libraries + vars + featureParameters.get(key));
                 /*if (!Boolean.parseBoolean(Context.toString(context.compileString((libraries + vars + featureParameters.get(key)), key, 0, null).exec(context, context.initSafeStandardObjects())))) {
                     return false;
                 }*/
