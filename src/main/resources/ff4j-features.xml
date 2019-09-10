@@ -27,6 +27,7 @@
                 ]]></param>
                 <param name="script1"><![CDATA[
                     context.ENABLE_DATA && context.ENABLE_DATA.role && context.ENABLE_DATA.role.match(/USER|ADMIN/g).length > 0
+                    throw new com.metaring.springbootappexample.exception.MetaRingException('I am custom made exception');
                 ]]></param>
             </flipstrategy>
         </feature>

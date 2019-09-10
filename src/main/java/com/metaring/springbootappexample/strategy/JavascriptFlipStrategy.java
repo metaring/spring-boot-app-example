@@ -26,8 +26,9 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Stream;
 
-import jdk.nashorn.api.scripting.JSObject;
-import jdk.nashorn.api.scripting.NashornException;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+
 import org.ff4j.core.FeatureStore;
 import org.ff4j.core.FlippingExecutionContext;
 import org.ff4j.property.Property;
@@ -38,9 +39,6 @@ import com.google.common.io.Files;
 import com.metaring.framework.util.ObjectUtil;
 import com.metaring.framework.util.StringUtil;
 import com.metaring.springbootappexample.configuration.FF4JConfiguration;
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
 
 public class JavascriptFlipStrategy extends AbstractFlipStrategy {
 
@@ -53,6 +51,7 @@ public class JavascriptFlipStrategy extends AbstractFlipStrategy {
 
     private static final Map<String, Map<String, String>> PARAMETERS = new TreeMap<>();
     private static final Map<String, String> LIBRARIES = new TreeMap<>();
+    private static final ScriptEngine JAVASCRIPT_ENGINE = new ScriptEngineManager().getEngineByName("nashorn");
 
     private static final Field PARAMETERS_FIELD;
 
@@ -101,10 +100,14 @@ public class JavascriptFlipStrategy extends AbstractFlipStrategy {
         return null;
     }
 
-    private final String setupCustomVars(Map<String, String> featureParameters, Map<String, Property<?>> customProperties) {
+    private final String setupCustomVars(Map<String, String> featureParameters,
+            Map<String, Property<?>> customProperties) {
         Map<String, Property<?>> globalProperties = FF4JConfiguration.GLOBAL_PROPERTIES;
-        boolean modular = globalProperties.containsKey(PARAM_MODULAR_NAME) && globalProperties.get(PARAM_MODULAR_NAME).asBoolean();
-        modular = customProperties.containsKey(PARAM_MODULAR_NAME) ? customProperties.get(PARAM_MODULAR_NAME).asBoolean() : modular;
+        boolean modular = globalProperties.containsKey(PARAM_MODULAR_NAME)
+                && globalProperties.get(PARAM_MODULAR_NAME).asBoolean();
+        modular = customProperties.containsKey(PARAM_MODULAR_NAME)
+                ? customProperties.get(PARAM_MODULAR_NAME).asBoolean()
+                : modular;
 
         if (!modular && featureParameters.size() > 1) {
             StringBuilder sb = new StringBuilder();
@@ -114,24 +117,19 @@ public class JavascriptFlipStrategy extends AbstractFlipStrategy {
         }
         String libraries = Stream.concat(globalProperties.keySet().stream(), customProperties.keySet().stream())
                 .filter(it -> {
-                    if(!it.startsWith(PARAM_LIBRARY_NAME_PREFIX)) {
+                    if (!it.startsWith(PARAM_LIBRARY_NAME_PREFIX)) {
                         return false;
                     }
-                    if(globalProperties.containsKey(it) && customProperties.containsKey(it) && !"true".equals(customProperties.get(it))) {
+                    if (globalProperties.containsKey(it) && customProperties.containsKey(it)
+                            && !"true".equals(customProperties.get(it))) {
                         return false;
                     }
                     return true;
-                })
-                .distinct()
-                .sorted()
-                .collect(
-                        StringBuilder::new,
-                        (response, element) -> {
-                            Map<String, Property<?>> map = globalProperties.containsKey(element) ? globalProperties : customProperties;
-                            response.append(tryLoadFile(map.get(element).asString())).append(NEW_LINE_SPLITERATOR);
-                        },
-                        StringBuilder::append
-                ).toString();
+                }).distinct().sorted().collect(StringBuilder::new, (response, element) -> {
+                    Map<String, Property<?>> map = globalProperties.containsKey(element) ? globalProperties
+                            : customProperties;
+                    response.append(tryLoadFile(map.get(element).asString())).append(NEW_LINE_SPLITERATOR);
+                }, StringBuilder::append).toString();
         return libraries.trim();
     }
 
@@ -143,7 +141,8 @@ public class JavascriptFlipStrategy extends AbstractFlipStrategy {
         }
         String libraries = LIBRARIES.get(featureName);
         if (libraries == null) {
-            LIBRARIES.put(featureName, libraries = setupCustomVars(featureParameters, fStore.read(featureName).getCustomProperties()));
+            LIBRARIES.put(featureName,
+                    libraries = setupCustomVars(featureParameters, fStore.read(featureName).getCustomProperties()));
         }
         final Map<String, Object> contextParameters = extractParametersFromContext(ctx);
         StringBuilder sb = new StringBuilder("var context = {};").append(NEW_LINE_SPLITERATOR);
@@ -152,55 +151,26 @@ public class JavascriptFlipStrategy extends AbstractFlipStrategy {
             if (elem != null && elem instanceof String) {
                 elem = "'" + elem + "'";
             }
-            sb.append("context['").append(it).append("'] = ").append(elem == null ? "null" : elem.toString()).append(";").append(NEW_LINE_SPLITERATOR);
+            sb.append("context['").append(it).append("'] = ").append(elem == null ? "null" : elem.toString())
+                    .append(";").append(NEW_LINE_SPLITERATOR);
         });
         final String vars = sb.toString();
         Context context = Context.getCurrentContext();
         context = context != null ? context : Context.enter();
         for (String key : featureParameters.keySet()) {
             try {
-                if (!Boolean.parseBoolean(Context.toString(context.compileString((libraries + vars + featureParameters.get(key)), key, 0, null).exec(context, context.initSafeStandardObjects())))) {
-                    executeScript("throw new com.metaring.springbootappexample.exception.MetaRingException('I am custom made exception');");
+                JAVASCRIPT_ENGINE.eval(libraries + vars + featureParameters.get(key));
+                /*if (!Boolean.parseBoolean(Context.toString(context.compileString((libraries + vars + featureParameters.get(key)), key, 0, null).exec(context, context.initSafeStandardObjects())))) {
                     return false;
-                }
+                }*/
             } catch (Exception e) {
-                e.printStackTrace();
-                return false;
+                Throwable ex = e;
+                while (ex.getCause() != null) {
+                    ex = ex.getCause();
+                }
+                throw new RuntimeException(ex);
             }
         }
         return true;
-    }
-
-    /**
-     * Executes the specified script.
-     * The default <code>ScriptContext</code> for the <code>ScriptEngine</code> is used.
-     */
-    private final void executeScript(String script){
-        ScriptEngineManager manager = new ScriptEngineManager();
-        ScriptEngine engine = manager.getEngineByName("nashorn");
-        try {
-            engine.eval(script);
-        } catch (ScriptException se) {
-            // get the original cause
-            Throwable cause = se.getCause();
-            // in this case, the cause is a nashorn exception
-            if (cause instanceof NashornException) {
-                NashornException ne = (NashornException)cause;
-                // Access the underlying ECMAScript error object thrown
-                Object obj = ne.getEcmaError();
-                // print ECMA object 'as is'
-                System.out.println(obj);
-                // In this example, the thrown ECMAScript object is
-                // an instanceof Error. Script objects are accessible
-                // as JSObject in java code.
-                if (obj instanceof JSObject) {
-                    JSObject jsObj = (JSObject)obj;
-                    System.out.println(jsObj.getMember("message"));
-                    System.out.println(jsObj.getMember("name"));
-                    // access nashorn specific 'stack' property
-                    System.out.println("stack trace: " + jsObj.getMember("stack"));
-                }
-            }
-        }
     }
 }

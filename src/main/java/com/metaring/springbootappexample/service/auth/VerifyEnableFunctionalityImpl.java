@@ -33,8 +33,12 @@ public class VerifyEnableFunctionalityImpl extends VerifyEnableFunctionality {
         functionalities.add(input.getFunctionalityName());
 
         for(String functionalityName : functionalities) {
-            if(!passed(functionalityName, flippingExecutionContext)) {
-                return end(false);
+            try {
+                if(!passed(functionalityName, flippingExecutionContext)) {
+                    return end(false);
+                }
+            } catch(RuntimeException e) {
+                throw (Exception) e.getCause();
             }
         }
         return end(true);
