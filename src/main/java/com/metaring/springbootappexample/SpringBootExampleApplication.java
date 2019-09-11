@@ -16,13 +16,15 @@
 
 package com.metaring.springbootappexample;
 
+import com.metaring.springbootappexample.domain.User;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 
 import com.metaring.framework.ext.spring.boot.MetaRingSpringBootApplication;
-import com.metaring.springbootappexample.domain.Person;
 import com.metaring.springbootappexample.repository.PersonRepository;
+
+import java.util.UUID;
 
 @SpringBootApplication
 public class SpringBootExampleApplication {
@@ -34,14 +36,14 @@ public class SpringBootExampleApplication {
     @Bean
     public CommandLineRunner demo(PersonRepository repository) {
         return args -> {
-            repository.save(new Person("Hayk", "Hovhannisyan"));
-            repository.save(new Person("Marco", "Vasapollo"));
-            repository.save(new Person("Jack", "Bauer"));
-            repository.save(new Person("Chloe", "O'Brian"));
-            repository.save(new Person("Vardan", "Hovhannisyan"));
-            repository.save(new Person("David", "Palmer"));
-            repository.save(new Person("Michelle", "Dessler"));
-            repository.save(new Person("John", "Doe"));
+            repository.save(new User(UUID.randomUUID().toString(), "Hayk", "Hovhannisyan"));
+            repository.save(new User(UUID.randomUUID().toString(), "Marco", "Vasapollo"));
+            repository.save(new User(UUID.randomUUID().toString(), "Jack", "Bauer"));
+            repository.save(new User(UUID.randomUUID().toString(), "Chloe", "O'Brian"));
+            repository.save(new User(UUID.randomUUID().toString(), "Vardan", "Hovhannisyan"));
+            repository.save(new User(UUID.randomUUID().toString(), "David", "Palmer"));
+            repository.save(new User(UUID.randomUUID().toString(), "Michelle", "Dessler"));
+            repository.save(new User(UUID.randomUUID().toString(), "John", "Doe"));
         };
     }
 }

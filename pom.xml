@@ -8,8 +8,8 @@
     the specific language governing permissions and limitations under the License. -->
 
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.metaring</groupId>
     <artifactId>spring-boot-app-example</artifactId>
@@ -23,6 +23,10 @@
         <ff4j.version>1.8.1</ff4j.version>
         <springboot.version>2.1.7.RELEASE</springboot.version>
         <metaring.version>1.5.0</metaring.version>
+        <dockerfile-maven-version>1.4.12</dockerfile-maven-version>
+        <ea.async.version>1.2.3</ea.async.version>
+        <main.class>com.metaring.springbootappexample.SpringBootExampleApplication</main.class>
+        <build.path>target/bin</build.path>
     </properties>
 
     <dependencies>
@@ -30,21 +34,50 @@
             <groupId>com.metaring</groupId>
             <artifactId>framework-ext-spring-boot-functionality</artifactId>
             <version>${metaring.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.metaring</groupId>
+                    <artifactId>framework-lib</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.metaring</groupId>
             <artifactId>framework-ext-spring-boot-email</artifactId>
             <version>${metaring.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.metaring</groupId>
+                    <artifactId>framework-lib</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.metaring</groupId>
             <artifactId>framework-ext-spring-boot-rpc</artifactId>
             <version>${metaring.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.metaring</groupId>
+                    <artifactId>framework-lib</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.metaring</groupId>
             <artifactId>framework-ext-mongodb-sensitivedatapersistence</artifactId>
             <version>${metaring.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.metaring</groupId>
+                    <artifactId>framework-lib</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>com.metaring</groupId>
+            <artifactId>framework-java-lib</artifactId>
+            <version>1.5.1-SNAPSHOT</version>
         </dependency>
 
         <dependency>
@@ -62,17 +95,6 @@
             <artifactId>spring-boot-starter-thymeleaf</artifactId>
             <version>${springboot.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-jpa</artifactId>
-            <version>${springboot.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
-            <version>1.4.199</version>
-        </dependency>
-
         <dependency>
             <groupId>org.ff4j</groupId>
             <artifactId>ff4j-store-mongodb-v3</artifactId>
@@ -112,6 +134,24 @@
     </dependencies>
 
     <build>
+        <resources>
+            <resource>
+                <directory>src</directory>
+                <excludes>
+                    <exclude>**/*</exclude>
+                </excludes>
+            </resource>
+            <resource>
+                <directory>src/main/resources/</directory>
+                <includes>
+                    <include>*</include>
+                    <include>static/*</include>
+                    <include>templates/*</include>
+                </includes>
+                <targetPath>${project.build.directory}/classes</targetPath>
+                <filtering>false</filtering>
+            </resource>
+        </resources>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -123,9 +163,126 @@
                 </configuration>
             </plugin>
             <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-                <version>${springboot.version}</version>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>2.6</version>
+                <executions>
+                    <execution>
+                        <id>copy-dependencies</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/bin</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>2.6</version>
+                <configuration>
+                    <finalName>
+                        ${project.artifactId}.${project.version}
+                    </finalName>
+                    <outputDirectory>${project.build.directory}/bin</outputDirectory>
+                    <archive>
+                        <manifest>
+                            <mainClass>${main.class}</mainClass>
+                        </manifest>
+                    </archive>
+                    <excludes>
+                        <exclude>./*.*</exclude>
+                    </excludes>
+                    <includes>
+                        <include>**/*.class</include>
+                        <include>metaring.config.default.json</include>
+                    </includes>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>1.7</version>
+                <executions>
+                    <execution>
+                        <id>delete</id>
+                        <phase>install</phase>
+                        <configuration>
+                            <target name="delete">
+                                <delete file="${project.build.directory}/${project.artifactId}-${project.version}-sources.jar" quiet="true" deleteonexit="true"/>
+                                <delete dir="${project.build.directory}/classes" quiet="true" includeemptydirs="true" deleteonexit="true"/>
+                                <delete dir="${project.build.directory}/test-classes" quiet="true" includeemptydirs="true" deleteonexit="true"/>
+                                <delete dir="${project.build.directory}/generated-sources" quiet="true" includeemptydirs="true" deleteonexit="true"/>
+                                <delete dir="${project.build.directory}/maven-archiver" quiet="true" includeemptydirs="true" deleteonexit="true"/>
+                                <delete dir="${project.build.directory}/maven-status" quiet="true" includeemptydirs="true" deleteonexit="true"/>
+                                <delete dir="${project.build.directory}/antrun" quiet="true" includeemptydirs="true" deleteonexit="true"/>
+                                <delete dir="${project.build.directory}/gen" quiet="true" includeemptydirs="true" deleteonexit="true"/>
+                                <delete dir="${project.build.directory}/log" quiet="true" includeemptydirs="true" deleteonexit="true"/>
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>com.spotify</groupId>
+                <artifactId>dockerfile-maven-plugin</artifactId>
+                <version>${dockerfile-maven-version}</version>
+                <executions>
+                    <execution>
+                        <id>docker-build-image</id>
+                        <phase>install</phase>
+                        <goals>
+                            <goal>build</goal>
+                        </goals>
+                        <configuration>
+                            <repository>${project.groupId}/${project.artifactId}</repository>
+                            <tag>latest</tag>
+                            <buildArgs>
+                                <EA_ASYNC_VERSION>${ea.async.version}</EA_ASYNC_VERSION>
+                                <MAIN_CLASS>${main.class}</MAIN_CLASS>
+                                <BIN_FOLDER>${build.path}</BIN_FOLDER>
+                            </buildArgs>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>com.ea.async</groupId>
+                <artifactId>ea-async-maven-plugin</artifactId>
+                <version>1.2.2</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>instrument</goal>
+                            <goal>instrument-test</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>1.9.1</version>
+                <executions>
+                    <execution>
+                        <id>add-source</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>src-gen</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

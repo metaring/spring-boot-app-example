@@ -13,11 +13,19 @@
       "rest": {
         "applicationName": "/hello"
       },
+      "thymeleaf": {
+          "cache": false
+      },
       "data": {
         "mongodb": {
-          "host": "localhost",
+          "host": "mongodb",
           "port": 27017,
           "database": "metaringPrototype"
+        }
+      },
+      "ff4j": {
+        "config": {
+          "name": "ff4j-features"
         }
       }
     }

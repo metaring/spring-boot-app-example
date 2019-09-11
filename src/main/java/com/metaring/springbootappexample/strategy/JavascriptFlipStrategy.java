@@ -26,20 +26,18 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Stream;
 
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-
 import org.ff4j.core.FeatureStore;
 import org.ff4j.core.FlippingExecutionContext;
 import org.ff4j.property.Property;
 import org.ff4j.strategy.AbstractFlipStrategy;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.JavaScriptException;
+import org.mozilla.javascript.NativeJavaObject;
 
 import com.google.common.io.Files;
 import com.metaring.framework.util.ObjectUtil;
 import com.metaring.framework.util.StringUtil;
 import com.metaring.springbootappexample.configuration.FF4JConfiguration;
-import org.mozilla.javascript.Script;
 
 public class JavascriptFlipStrategy extends AbstractFlipStrategy {
 
@@ -52,7 +50,6 @@ public class JavascriptFlipStrategy extends AbstractFlipStrategy {
 
     private static final Map<String, Map<String, String>> PARAMETERS = new TreeMap<>();
     private static final Map<String, String> LIBRARIES = new TreeMap<>();
-    private static final ScriptEngine JAVASCRIPT_ENGINE = new ScriptEngineManager().getEngineByName("nashorn");
 
     private static final Field PARAMETERS_FIELD;
 
@@ -116,13 +113,13 @@ public class JavascriptFlipStrategy extends AbstractFlipStrategy {
             featureParameters.clear();
             featureParameters.put("script", sb.toString());
         }
+        @SuppressWarnings("unlikely-arg-type")
         String libraries = Stream.concat(globalProperties.keySet().stream(), customProperties.keySet().stream())
                 .filter(it -> {
                     if (!it.startsWith(PARAM_LIBRARY_NAME_PREFIX)) {
                         return false;
                     }
-                    if (globalProperties.containsKey(it) && customProperties.containsKey(it)
-                            && !"true".equals(customProperties.get(it))) {
+                    if (globalProperties.containsKey(it) && customProperties.containsKey(it) && !"true".equals(customProperties.get(it))) {
                         return false;
                     }
                     return true;
@@ -152,24 +149,25 @@ public class JavascriptFlipStrategy extends AbstractFlipStrategy {
             if (elem != null && elem instanceof String) {
                 elem = "'" + elem + "'";
             }
-            sb.append("context['").append(it).append("'] = ").append(elem == null ? "null" : elem.toString())
-                    .append(";").append(NEW_LINE_SPLITERATOR);
+            sb.append("context['").append(it).append("'] = ").append(elem == null ? "null" : elem.toString()).append(";").append(NEW_LINE_SPLITERATOR);
         });
         final String vars = sb.toString();
         Context context = Context.getCurrentContext();
         context = context != null ? context : Context.enter();
+        context.setOptimizationLevel(-1);
         for (String key : featureParameters.keySet()) {
             try {
-                context.setOptimizationLevel(-1); // must use interpreter mode
-                Script script = context.compileString((libraries + vars + featureParameters.get(key)), key, 0, null);
-//                JAVASCRIPT_ENGINE.eval(libraries + vars + featureParameters.get(key));
-                if (!Boolean.parseBoolean(Context.toString(Context.getCurrentContext().executeScriptWithContinuations(script, context.initStandardObjects())))) {
+                if (!Boolean.parseBoolean(Context.toString(context.executeScriptWithContinuations(context.compileString((libraries + vars + featureParameters.get(key)), key, 0, null), context.initStandardObjects())))) {
                     return false;
                 }
             } catch (Exception e) {
                 Throwable ex = e;
                 while (ex.getCause() != null) {
                     ex = ex.getCause();
+                }
+                try {
+                    ex = (Exception) ((NativeJavaObject) ((JavaScriptException) ex).getValue()).unwrap();
+                } catch(Exception e1) {
                 }
                 throw new RuntimeException(ex);
             }

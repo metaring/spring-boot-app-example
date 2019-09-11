@@ -1,0 +1,23 @@
+version: "3.7"
+services:
+  mongodb:
+    restart: always
+    image: mongo:latest
+    container_name: metaring-mongodb
+    volumes:
+      - db-data:/data/db
+      - db-data:/data/configdb
+    ports:
+      - 27017:27017
+  app:
+    restart: always
+    image: com.metaring/spring-boot-app-example:latest
+    container_name: metaring-app
+    ports:
+      - 8080:8080
+    volumes:
+      - ${APP_CONFIG}:/app/config
+    depends_on:
+      - mongodb
+volumes:
+  db-data:

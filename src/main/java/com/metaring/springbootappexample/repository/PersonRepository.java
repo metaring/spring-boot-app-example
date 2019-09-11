@@ -16,14 +16,14 @@
 
 package com.metaring.springbootappexample.repository;
 
-import com.metaring.springbootappexample.domain.Person;
-import org.springframework.data.repository.CrudRepository;
+import com.metaring.springbootappexample.domain.User;
+import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.scheduling.annotation.Async;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-public interface PersonRepository extends CrudRepository<Person, Long> {
+public interface PersonRepository extends MongoRepository<User, String> {
     @Async("MetaRingAsyncExecutor")
-    CompletableFuture<List<Person>> findByLastName(String lastName);
+    CompletableFuture<List<User>> findByLastName(String lastName);
 }
