@@ -23,25 +23,26 @@ public class VerifyEnableFunctionalityImpl extends VerifyEnableFunctionality {
 
     @Override
     protected CompletableFuture<Boolean> call(EnableDataModel input) throws Exception {
-        @SuppressWarnings("unchecked")
-        Map<String, Object> context = (Map<String, Object>) getContext().getData().clone();
-        context.put("ENABLE_DATA", input);
-        FlippingExecutionContext flippingExecutionContext = new FlippingExecutionContext(context);
-        List<String> functionalities = new ArrayList<>();
 
-        functionalities.add(LimitedAccessModuleInfo.INFO.getFunctionalityFullyQualifiedName());
-        functionalities.add(input.getFunctionalityName());
+            @SuppressWarnings("unchecked")
+            Map<String, Object> context = (Map<String, Object>) getContext().getData().clone();
+            context.put("ENABLE_DATA", input);
+            FlippingExecutionContext flippingExecutionContext = new FlippingExecutionContext(context);
+            List<String> functionalities = new ArrayList<>();
 
-        for(String functionalityName : functionalities) {
-            try {
-                if(!passed(functionalityName, flippingExecutionContext)) {
-                    return end(false);
+            functionalities.add(LimitedAccessModuleInfo.INFO.getFunctionalityFullyQualifiedName());
+            functionalities.add(input.getFunctionalityName());
+
+            for (String functionalityName : functionalities) {
+                try {
+                    if (!passed(functionalityName, flippingExecutionContext)) {
+                        return end(false);
+                    }
+                } catch (RuntimeException e) {
+                    throw (Exception) e.getCause();
                 }
-            } catch(RuntimeException e) {
-                throw (Exception) e.getCause();
             }
-        }
-        return end(true);
+            return end(true);
     }
 
     @Override

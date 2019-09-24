@@ -22,6 +22,8 @@ public class ServiceFunctionalitiesManager extends FunctionalitiesManager implem
 
     public static final FunctionalityInfo MESSAGE = MessageFunctionality.INFO;
 
+    public static final FunctionalityInfo SUBSCRIBE = SubscribeFunctionality.INFO;
+
     public static final CompletableFuture<Boolean> changePassword(String string) {
         return call(CHANGE_PASSWORD, ChangePasswordFunctionality.class, getCallingFunctionality(), string, result -> result.asTruth());
     }
@@ -70,6 +72,22 @@ public class ServiceFunctionalitiesManager extends FunctionalitiesManager implem
         return callFromJson(MESSAGE, MessageFunctionality.class, callingFunctionality, stringJson, null);
     }
 
+    public static final CompletableFuture<Void> subscribe(String string) {
+        return call(SUBSCRIBE, SubscribeFunctionality.class, getCallingFunctionality(), string, null);
+    }
+
+    public static final CompletableFuture<Void> subscribe(Functionality functionality, String string) {
+        return call(SUBSCRIBE, SubscribeFunctionality.class, functionality, string, null);
+    }
+
+    public static final CompletableFuture<Void> subscribeFromJson(String stringJson) {
+        return callFromJson(SUBSCRIBE, SubscribeFunctionality.class, getCallingFunctionality(), stringJson, null);
+    }
+
+    public static final CompletableFuture<Void> subscribeFromJson(Functionality callingFunctionality, String stringJson) {
+        return callFromJson(SUBSCRIBE, SubscribeFunctionality.class, callingFunctionality, stringJson, null);
+    }
+
     @Bean
     static final ChangePasswordFunctionality changePasswordFunctionality() {
         return ChangePasswordFunctionality.INSTANCE;
@@ -83,6 +101,11 @@ public class ServiceFunctionalitiesManager extends FunctionalitiesManager implem
     @Bean
     static final MessageFunctionality messageFunctionality() {
         return MessageFunctionality.INSTANCE;
+    }
+
+    @Bean
+    static final SubscribeFunctionality subscribeFunctionality() {
+        return SubscribeFunctionality.INSTANCE;
     }
 
 }

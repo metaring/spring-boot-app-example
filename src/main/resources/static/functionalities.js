@@ -72,4 +72,24 @@ function functionalities(endPointProvider, identificationDataProvider, restricte
       });
     });
   };
+
+  context.COM_METARING_SPRINGBOOTAPPEXAMPLE_SERVICE_SUBSCRIBE = function(input, callback) {
+    return new Promise(function(accept) {
+      setTimeout(function() {
+        var internalCallback = function(response, request) {
+          accept(response);
+          callback && callback(response, request);
+        };
+        context.endPointProvider({
+          id : parseInt((Math.random() * new Date().getTime() * Math.random() + new Date().getTime()).toString().split('.').join()),
+          name : 'com.metaring.framework.rpc.auth.callReserved',
+          param : {
+            name : 'com.metaring.springbootappexample.service.subscribe',
+            data : context.identificationDataProvider(),
+            param : input || null
+          }
+        }, internalCallback);
+      });
+    });
+  };
 }

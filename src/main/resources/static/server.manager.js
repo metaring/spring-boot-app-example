@@ -13,7 +13,7 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-function ServerManager(defaultInit, errorsManager, callback) {
+function ServerManager(defaultInit, errorsManager, callback, base_url) {
 
   var context = this;
 
@@ -25,6 +25,17 @@ function ServerManager(defaultInit, errorsManager, callback) {
   context.sockOK = false;
   context.first = true;
   context.pendingRequests = {};
+
+  context.base_url = base_url;
+
+  try {
+     context.base_url = context.base_url || window.base_url;
+  } catch(e) {
+  }
+
+  context.base_url = context.base_url || '.';
+
+  context.base_url.charAt(context.base_url.length - 1) === '/' && (context.base_url = context.base_url.substring(0, context.base_url.length - 1));
 
   context.call = function call(request, callback) {
     if(context.sockOK && !context.forceRest(request)) {
@@ -71,7 +82,7 @@ function ServerManager(defaultInit, errorsManager, callback) {
   context.rest = function(request, callback) {
     $.ajax({
       type : 'POST',
-      url : base_url + '/call',
+      url : context.base_url + '/call',
       data : JSON.stringify(request),
       success : function(response) {
         context.manageResponse(request, response, callback)
@@ -90,7 +101,7 @@ function ServerManager(defaultInit, errorsManager, callback) {
   context.manageSockjsResponse = function(sockjsResponse) {
     var response = JSON.parse(sockjsResponse.data);
     if(response.topic) {
-      $.publish(response.topic, response.payload);
+      context.notify(response.topic, response.payload);
       return;
     }
     var request = context.pendingRequests[response.id].request;
@@ -102,10 +113,10 @@ function ServerManager(defaultInit, errorsManager, callback) {
   context.manageResponse = function(request, response, callback) {
     if((typeof response).toLowerCase() === 'string') {
       try {
-        response = $.parseJSON(response);
+        response = JSON.parse(response);
       } catch(e) {}
     }
-    response.data && Object.keys(response.data).map(function(data) {$.publish(data, response)});
+    response.data && Object.keys(response.data).map(function(data) {context.notify(data, response)});
     var callCallback = callback !== undefined && callback !== null && (typeof callback).toLowerCase() === 'function';
     if(response.verdict === undefined && response.result !== undefined && response.result.verdict !== undefined) {
       response = response.result;
@@ -138,11 +149,22 @@ function ServerManager(defaultInit, errorsManager, callback) {
     }
   };
 
+  context.notify = function(data, response) {
+    try {
+        $.publish(data, response);
+    } catch(e) {
+    }
+    //CUSTOM-NOTIFY
+  };
+
   context.manageWarning = function(request, response, callback, callCallback) {
   };
 
-  context.sockjsClose = function sockjsClose() {
+  context.sockjsClose = function sockjsClose(event) {
     context.sockOK = false;
+    if(event.code === 1000) {
+        return;
+    }
     if(Object.keys(context.pendingRequests).length > 0) {
       for(var i in context.pendingRequests) {
         var pendingRequest = context.pendingRequests[i];
@@ -156,14 +178,15 @@ function ServerManager(defaultInit, errorsManager, callback) {
   context.initSockJS = function() {
     context.sockOK = false;
     context.sock = null;
-    context.sock = new SockJS(base_url + '/call.sock');
+    context.sock = new SockJS(context.base_url + '/call.sock');
     context.sock.onopen = function() {
       context.sockOK = true;
+      context.connectionId = context.sock._transport.url.split('/')[5];
       if(context.first) {
         context.first = false;
         context.callback && context.callback();
       } else {
-    	  context.defaultInit && context.defaultInit();
+          context.defaultInit && context.defaultInit();
       }
     };
     context.sock.onclose = context.sockjsClose;
@@ -171,4 +194,4 @@ function ServerManager(defaultInit, errorsManager, callback) {
   }
 
   context.initSockJS();
-}
+};
