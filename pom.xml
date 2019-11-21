@@ -255,7 +255,7 @@
             <plugin>
                 <groupId>com.ea.async</groupId>
                 <artifactId>ea-async-maven-plugin</artifactId>
-                <version>1.2.2</version>
+                <version>${ea.async.version}</version>
                 <executions>
                     <execution>
                         <goals>
