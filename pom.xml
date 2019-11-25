@@ -22,7 +22,7 @@
         <java.version>1.8</java.version>
         <ff4j.version>1.8.1</ff4j.version>
         <springboot.version>2.1.7.RELEASE</springboot.version>
-        <metaring.version>1.5.0</metaring.version>
+        <metaring.version>1.5.1</metaring.version>
         <dockerfile-maven-version>1.4.12</dockerfile-maven-version>
         <ea.async.version>1.2.3</ea.async.version>
         <main.class>com.metaring.springbootappexample.SpringBootExampleApplication</main.class>
@@ -77,7 +77,7 @@
         <dependency>
             <groupId>com.metaring</groupId>
             <artifactId>framework-java-lib</artifactId>
-            <version>1.5.1-SNAPSHOT</version>
+            <version>${metaring.version}</version>
         </dependency>
 
         <dependency>
