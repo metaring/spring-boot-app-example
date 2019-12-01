@@ -34,49 +34,20 @@
             <groupId>com.metaring</groupId>
             <artifactId>framework-ext-spring-boot-functionality</artifactId>
             <version>${metaring.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.metaring</groupId>
-                    <artifactId>framework-lib</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.metaring</groupId>
             <artifactId>framework-ext-spring-boot-email</artifactId>
             <version>${metaring.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.metaring</groupId>
-                    <artifactId>framework-lib</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.metaring</groupId>
             <artifactId>framework-ext-spring-boot-rpc</artifactId>
             <version>${metaring.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.metaring</groupId>
-                    <artifactId>framework-lib</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.metaring</groupId>
             <artifactId>framework-ext-mongodb-sensitivedatapersistence</artifactId>
-            <version>${metaring.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.metaring</groupId>
-                    <artifactId>framework-lib</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>com.metaring</groupId>
-            <artifactId>framework-java-lib</artifactId>
             <version>${metaring.version}</version>
         </dependency>
 
