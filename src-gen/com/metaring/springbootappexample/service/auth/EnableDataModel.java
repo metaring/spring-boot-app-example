@@ -9,29 +9,17 @@ public class EnableDataModel implements GeneratedCoreType {
     public static final String FULLY_QUALIFIED_NAME = "com.metaring.springbootappexample.service.auth.enableData";
 
     private String role;
-    private String functionalityName;
-    private DataRepresentation functionalityParam;
 
-    private EnableDataModel(String role, String functionalityName, DataRepresentation functionalityParam) {
+    private EnableDataModel(String role) {
         this.role = role;
-        this.functionalityName = functionalityName;
-        this.functionalityParam = functionalityParam;
     }
 
     public String getRole() {
         return this.role;
     }
 
-    public String getFunctionalityName() {
-        return this.functionalityName;
-    }
-
-    public DataRepresentation getFunctionalityParam() {
-        return this.functionalityParam;
-    }
-
-    public static EnableDataModel create(String role, String functionalityName, DataRepresentation functionalityParam) {
-        return new EnableDataModel(role, functionalityName, functionalityParam);
+    public static EnableDataModel create(String role) {
+        return new EnableDataModel(role);
     }
 
     public static EnableDataModel fromJson(String jsonString) {
@@ -59,23 +47,7 @@ public class EnableDataModel implements GeneratedCoreType {
             }
         }
 
-        String functionalityName = null;
-        if(dataRepresentation.hasProperty("functionalityName")) {
-            try {
-                functionalityName = dataRepresentation.getText("functionalityName");
-            } catch (Exception e) {
-            }
-        }
-
-        DataRepresentation functionalityParam = null;
-        if(dataRepresentation.hasProperty("functionalityParam")) {
-            try {
-                functionalityParam = dataRepresentation.get("functionalityParam");
-            } catch (Exception e) {
-            }
-        }
-
-        EnableDataModel enableDataModel = create(role, functionalityName, functionalityParam);
+        EnableDataModel enableDataModel = create(role);
         return enableDataModel;
     }
 
@@ -95,23 +67,7 @@ public class EnableDataModel implements GeneratedCoreType {
             }
         }
 
-        String functionalityName = null;
-        if(dataRepresentation.hasProperty("functionalityName")) {
-            try {
-                functionalityName = dataRepresentation.getText("functionalityName");
-            } catch (Exception e) {
-            }
-        }
-
-        DataRepresentation functionalityParam = null;
-        if(dataRepresentation.hasProperty("functionalityParam")) {
-            try {
-                functionalityParam = dataRepresentation.get("functionalityParam");
-            } catch (Exception e) {
-            }
-        }
-
-        EnableDataModel enableDataModel = create(role, functionalityName, functionalityParam);
+        EnableDataModel enableDataModel = create(role);
         return enableDataModel;
     }
 
@@ -119,14 +75,6 @@ public class EnableDataModel implements GeneratedCoreType {
         DataRepresentation dataRepresentation = Tools.FACTORY_DATA_REPRESENTATION.create();
         if (role != null) {
             dataRepresentation.add("role", role);
-        }
-
-        if (functionalityName != null) {
-            dataRepresentation.add("functionalityName", functionalityName);
-        }
-
-        if (functionalityParam != null) {
-            dataRepresentation.add("functionalityParam", functionalityParam);
         }
 
         return dataRepresentation;

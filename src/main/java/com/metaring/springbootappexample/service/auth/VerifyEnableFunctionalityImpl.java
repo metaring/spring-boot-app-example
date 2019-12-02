@@ -31,7 +31,7 @@ public class VerifyEnableFunctionalityImpl extends VerifyEnableFunctionality {
             List<String> functionalities = new ArrayList<>();
 
             functionalities.add(LimitedAccessModuleInfo.INFO.getFunctionalityFullyQualifiedName());
-            functionalities.add(input.getFunctionalityName());
+            functionalities.add(input.getRole());
 
             for (String functionalityName : functionalities) {
                 try {

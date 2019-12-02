@@ -7,7 +7,7 @@ import com.metaring.framework.functionality.FunctionalityInfo;
 
 abstract class ChangePasswordFunctionality extends AbstractFunctionality implements GeneratedFunctionality {
 
-    static final FunctionalityInfo INFO = FunctionalityInfo.create("com.metaring.springbootappexample.service.changePassword", false, false, true, "java.lang.String", "java.lang.Boolean");
+    static final FunctionalityInfo INFO = FunctionalityInfo.create("com.metaring.springbootappexample.service.changePassword", false, false, false, "java.lang.String", "java.lang.Boolean");
 
     static final ChangePasswordFunctionality INSTANCE = new ChangePasswordFunctionalityImpl();
 

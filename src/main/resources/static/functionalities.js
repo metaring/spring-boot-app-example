@@ -1,4 +1,4 @@
-function functionalities(endPointProvider, identificationDataProvider, restrictedDataProvider) {
+function functionalities(endPointProvider, identificationDataProvider) {
 
   if(!endPointProvider) {
     throw 'End Point Provider must be defined';
@@ -12,11 +12,6 @@ function functionalities(endPointProvider, identificationDataProvider, restricte
   }
   context.identificationDataProvider = identificationDataProvider;
 
-  if(!restrictedDataProvider) {
-    throw 'Restricted Data Provider must be defined';
-  }
-  context.restrictedDataProvider = restrictedDataProvider;
-
   context.COM_METARING_SPRINGBOOTAPPEXAMPLE_SERVICE_CHANGE_PASSWORD = function(input, callback) {
     return new Promise(function(accept) {
       setTimeout(function() {
@@ -26,16 +21,8 @@ function functionalities(endPointProvider, identificationDataProvider, restricte
         };
         context.endPointProvider({
           id : parseInt((Math.random() * new Date().getTime() * Math.random() + new Date().getTime()).toString().split('.').join()),
-          name : 'com.metaring.framework.rpc.auth.callReserved',
-          param : {
-            name : 'com.metaring.framework.rpc.auth.callRestricted',
-            data : context.identificationDataProvider(),
-            param : {
-              name : 'com.metaring.springbootappexample.service.changePassword',
-              data : context.restrictedDataProvider(context.identificationDataProvider),
-              param : input || null
-            }
-          }
+          name : 'com.metaring.springbootappexample.service.changePassword',
+          param : input || null
         }, internalCallback);
       });
     });
