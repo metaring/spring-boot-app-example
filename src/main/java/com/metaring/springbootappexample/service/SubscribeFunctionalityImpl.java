@@ -3,7 +3,6 @@ package com.metaring.springbootappexample.service;
 import java.util.concurrent.CompletableFuture;
 
 import com.metaring.framework.broadcast.BroadcastController;
-import com.metaring.framework.broadcast.BroadcastControllerManager;
 import com.metaring.framework.broadcast.Event;
 import com.metaring.framework.broadcast.SingleCallback;
 
@@ -26,9 +25,7 @@ public class SubscribeFunctionalityImpl extends SubscribeFunctionality {
                 System.out.println("Loop " + i + ": " + Thread.currentThread().getName());
                 try {
                     Thread.sleep(10000);
-                    BroadcastControllerManager.INSTANCE.thenAccept(it -> {
-                        it.callback(SingleCallback.create(address, Event.create("push", dataRepresentationFromObject("Server Responding from Subscriber Functionality Impl."))), EXECUTOR);
-                    });
+                    BroadcastController.callback(SingleCallback.create(address, Event.create("push", dataRepresentationFromObject("Server Responding from Subscriber Functionality Impl."))), EXECUTOR);
                 } catch (InterruptedException e) {
                     System.out.printf("Interrupted Exception happened %s", e);
                 }
