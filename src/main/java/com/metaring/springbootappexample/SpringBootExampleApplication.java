@@ -16,6 +16,7 @@
 
 package com.metaring.springbootappexample;
 
+import com.metaring.springbootappexample.service.roles.callback.CallbackScriptRunner;
 import com.metaring.springbootappexample.domain.User;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -31,6 +32,10 @@ public class SpringBootExampleApplication {
 
     public static void main(String[] args) {
         MetaRingSpringBootApplication.run(args, SpringBootExampleApplication.class);
+        // Example 1: CallbackScriptRunner.invokeDatabaseCallback();
+        // Example 2: CallbackScriptRunner.executeScriptWithContinuations();
+        // Example 3: CallbackScriptRunner.doTopCall()
+        CallbackScriptRunner.doTopCall();
     }
 
     @Bean
